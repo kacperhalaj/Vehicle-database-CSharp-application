@@ -3,6 +3,8 @@
 ## Opis aplikacji
 Aplikacja **Vehicle Database** umożliwia zarządzanie bazą pojazdów i ich szczegółami w relacyjnej bazie danych PostgreSQL. System został stworzony w języku **C#** z wykorzystaniem technologii Entity Framework Core, co zapewnia wygodne mapowanie obiektowo-relacyjne oraz wsparcie dla migracji i seedowania danych. Interfejs użytkownika pozwala na intuicyjne przeglądanie, filtrowanie i edycję rekordów.
 
+![Główne okno aplikacji](images/main_window.png)
+
 ---
 
 ## Wymagania systemowe
