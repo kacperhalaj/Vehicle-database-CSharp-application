@@ -1,5 +1,4 @@
 using System;
-using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -16,33 +15,55 @@ namespace Projekt
             txtUsername.KeyDown += TextBox_KeyDown;
             txtPassword.KeyDown += TextBox_KeyDown;
             txtUsername.Leave += TxtUsername_Leave;
+            btnSettings.Click += BtnSettings_Click;
         }
 
-        // asynchroniczna walidacja loginu po wpisaniu i opuszczeniu pola
+        private void BtnSettings_Click(object sender, EventArgs e)
+        {
+            using (var settings = new SettingsForm())
+            {
+                settings.ShowDialog();
+            }
+        }
+
+        // Asynchroniczna walidacja loginu po wpisaniu i opuszczeniu pola
         private async void TxtUsername_Leave(object sender, EventArgs e)
         {
             string username = txtUsername.Text.Trim();
             if (string.IsNullOrWhiteSpace(username)) return;
 
-            //sprawdzanie asynchronicznie czy u¿ytkownik istnieje
-            bool exists = await UserExistsAsync(username);
-            if (!exists)
+            try
             {
-
-                MessageBox.Show("Podany login nie istnieje w bazie.", "B³¹d", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                bool exists = await UserExistsAsync(username);
+                if (!exists)
+                {
+                    MessageBox.Show("Podany login nie istnieje w bazie.", "B³¹d", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowConnectionError(ex);
             }
         }
 
         // ASYNC: sprawdza czy u¿ytkownik istnieje w bazie
         private async Task<bool> UserExistsAsync(string username)
         {
-            using (var db = new AppDbContext())
+            try
             {
-                return await Task.Run(() => db.Users.Any(u => u.Login == username));
+                using (var db = new AppDbContext())
+                {
+                    return await Task.Run(() => db.Users.Any(u => u.Login == username));
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowConnectionError(ex);
+                return false;
             }
         }
 
-        // Obs³uga przycisku zaloguj sie
+        // Obs³uga przycisku "Zaloguj siê"
         private async void button1_Click(object sender, EventArgs e)
         {
             string username = txtUsername.Text.Trim();
@@ -59,32 +80,39 @@ namespace Projekt
                 return;
             }
 
-            // Asynchroniczna walidacja loginu
-            if (!await UserExistsAsync(username))
+            try
             {
-                MessageBox.Show("Podany login nie istnieje w bazie.", "B³¹d", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            // Asynchroniczne sprawdzanie loginu i has³a
-            bool correct = await Task.Run(() =>
-            {
-                using (var db = new AppDbContext())
+                // Asynchroniczna walidacja loginu
+                if (!await UserExistsAsync(username))
                 {
-                    return db.Users.Any(u => u.Login == username && u.Password == password);
+                    MessageBox.Show("Podany login nie istnieje w bazie.", "B³¹d", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
-            });
 
-            if (correct)
-            {
-                MessageBox.Show("Logowanie zakoñczone sukcesem!", "Sukces", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                MainFrame mainForm = new MainFrame();
-                mainForm.Show();
-                this.Hide();
+                // Asynchroniczne sprawdzanie loginu i has³a
+                bool correct = await Task.Run(() =>
+                {
+                    using (var db = new AppDbContext())
+                    {
+                        return db.Users.Any(u => u.Login == username && u.Password == password);
+                    }
+                });
+
+                if (correct)
+                {
+                    MessageBox.Show("Logowanie zakoñczone sukcesem!", "Sukces", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MainFrame mainForm = new MainFrame();
+                    mainForm.Show();
+                    this.Hide();
+                }
+                else
+                {
+                    MessageBox.Show("Nieprawid³owy login lub has³o.", "B³¹d", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Nieprawid³owy login lub has³o.", "B³¹d", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ShowConnectionError(ex);
             }
         }
 
@@ -112,6 +140,17 @@ namespace Projekt
                 e.SuppressKeyPress = true;
                 button1_Click(sender, e);
             }
+        }
+
+        // Helper do wyœwietlania b³êdów po³¹czenia z baz¹
+        private void ShowConnectionError(Exception ex)
+        {
+            MessageBox.Show(
+                "Nie mo¿na po³¹czyæ siê z baz¹ danych. SprawdŸ ustawienia po³¹czenia.\n\nSzczegó³y:\n" + ex.Message,
+                "B³¹d po³¹czenia z baz¹",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error
+            );
         }
     }
 }

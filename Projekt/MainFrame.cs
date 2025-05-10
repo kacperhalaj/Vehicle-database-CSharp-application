@@ -42,7 +42,6 @@ namespace Projekt
             dataGridViewVehicles.CellClick += DataGridViewVehicles_CellClick;
             dataGridViewVehicles.ColumnHeaderMouseClick += DataGridViewVehicles_ColumnHeaderMouseClick;
 
-
             btnSettings.Click += BtnSettings_Click;
         }
 
@@ -56,30 +55,44 @@ namespace Projekt
 
         private void MainFrame_Load(object sender, EventArgs e)
         {
-            LoadVehiclesFromDatabase();
+            try
+            {
+                LoadVehiclesFromDatabase();
+            }
+            catch (Exception ex)
+            {
+                ShowConnectionError(ex);
+            }
         }
 
         private void LoadVehiclesFromDatabase(string search = "")
         {
-            pojazdySource = dbContext.Pojazdy
-                .Include(p => p.Osobowy)
-                .Include(p => p.Motor)
-                .ToList();
-
-            if (!string.IsNullOrWhiteSpace(search))
+            try
             {
-                string s = search.ToLower();
-                pojazdySource = pojazdySource.Where(p =>
-                    (p.Marka ?? "").ToLower().Contains(s) ||
-                    (p.Model ?? "").ToLower().Contains(s) ||
-                    p.RokProdukcji.ToString().Contains(s) ||
-                    (p.Typ ?? "").ToLower().Contains(s) ||
-                    (p.Typ == "Osobowy" && p.Osobowy != null && p.Osobowy.LiczbaDrzwi.ToString().Contains(s)) ||
-                    (p.Typ == "Motor" && p.Motor != null && p.Motor.PojemnoscSilnika.ToString().Contains(s))
-                ).ToList();
-            }
+                pojazdySource = dbContext.Pojazdy
+                    .Include(p => p.Osobowy)
+                    .Include(p => p.Motor)
+                    .ToList();
 
-            SetDataGridSource(pojazdySource);
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    string s = search.ToLower();
+                    pojazdySource = pojazdySource.Where(p =>
+                        (p.Marka ?? "").ToLower().Contains(s) ||
+                        (p.Model ?? "").ToLower().Contains(s) ||
+                        p.RokProdukcji.ToString().Contains(s) ||
+                        (p.Typ ?? "").ToLower().Contains(s) ||
+                        (p.Typ == "Osobowy" && p.Osobowy != null && p.Osobowy.LiczbaDrzwi.ToString().Contains(s)) ||
+                        (p.Typ == "Motor" && p.Motor != null && p.Motor.PojemnoscSilnika.ToString().Contains(s))
+                    ).ToList();
+                }
+
+                SetDataGridSource(pojazdySource);
+            }
+            catch (Exception ex)
+            {
+                ShowConnectionError(ex);
+            }
         }
 
         private void SetDataGridSource(List<Pojazd> list)
@@ -173,137 +186,151 @@ namespace Projekt
 
         private void ButtonAddVehicle_Click(object sender, EventArgs e)
         {
-            using (var addVehicleForm = new AddVehicleForm())
+            try
             {
-                if (addVehicleForm.ShowDialog() == DialogResult.OK)
+                using (var addVehicleForm = new AddVehicleForm())
                 {
-                    var typ = addVehicleForm.Type;
-                    var spec = addVehicleForm.SpecificValue;
-
-                    var pojazd = new Pojazd
+                    if (addVehicleForm.ShowDialog() == DialogResult.OK)
                     {
-                        Marka = addVehicleForm.Brand,
-                        Model = addVehicleForm.Model,
-                        RokProdukcji = addVehicleForm.Year,
-                        Typ = typ
-                    };
+                        var typ = addVehicleForm.Type;
+                        var spec = addVehicleForm.SpecificValue;
 
-                    if (typ == "Osobowy")
-                    {
-                        if (spec >= 1 && spec <= 5)
+                        var pojazd = new Pojazd
                         {
-                            pojazd.Osobowy = new Osobowy { LiczbaDrzwi = spec };
-                            pojazd.Motor = null;
-                        }
-                        else
+                            Marka = addVehicleForm.Brand,
+                            Model = addVehicleForm.Model,
+                            RokProdukcji = addVehicleForm.Year,
+                            Typ = typ
+                        };
+
+                        if (typ == "Osobowy")
                         {
-                            MessageBox.Show("Dla pojazdu osobowego liczba drzwi musi być od 1 do 5.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            return;
+                            if (spec >= 1 && spec <= 5)
+                            {
+                                pojazd.Osobowy = new Osobowy { LiczbaDrzwi = spec };
+                                pojazd.Motor = null;
+                            }
+                            else
+                            {
+                                MessageBox.Show("Dla pojazdu osobowego liczba drzwi musi być od 1 do 5.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                return;
+                            }
                         }
+                        else if (typ == "Motor")
+                        {
+                            if (spec > 0)
+                            {
+                                pojazd.Motor = new Motor { PojemnoscSilnika = spec };
+                                pojazd.Osobowy = null;
+                            }
+                            else
+                            {
+                                MessageBox.Show("Dla motocykla pojemność silnika musi być liczbą większą od 0.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                return;
+                            }
+                        }
+
+                        dbContext.Pojazdy.Add(pojazd);
+                        dbContext.SaveChanges();
+                        LoadVehiclesFromDatabase();
                     }
-                    else if (typ == "Motor")
-                    {
-                        if (spec > 0)
-                        {
-                            pojazd.Motor = new Motor { PojemnoscSilnika = spec };
-                            pojazd.Osobowy = null;
-                        }
-                        else
-                        {
-                            MessageBox.Show("Dla motocykla pojemność silnika musi być liczbą większą od 0.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            return;
-                        }
-                    }
-
-                    dbContext.Pojazdy.Add(pojazd);
-                    dbContext.SaveChanges();
-                    LoadVehiclesFromDatabase();
                 }
+            }
+            catch (Exception ex)
+            {
+                ShowConnectionError(ex);
             }
         }
 
         private void ButtonUpdate_Click(object sender, EventArgs e)
         {
-            if (dataGridViewVehicles.SelectedRows.Count > 0)
+            try
             {
-                var selectedRow = dataGridViewVehicles.SelectedRows[0];
-                string marka = selectedRow.Cells["Marka"].Value.ToString();
-                string model = selectedRow.Cells["Model"].Value.ToString();
-                int rok = int.Parse(selectedRow.Cells["Rok"].Value.ToString());
-
-                var pojazd = dbContext.Pojazdy
-                    .Include(p => p.Osobowy)
-                    .Include(p => p.Motor)
-                    .FirstOrDefault(p => p.Marka == marka && p.Model == model && p.RokProdukcji == rok);
-
-                if (pojazd != null)
+                if (dataGridViewVehicles.SelectedRows.Count > 0)
                 {
-                    using (var updateVehicleForm = new UpdateVehicleForm(
-                        pojazd.Marka,
-                        pojazd.Model,
-                        pojazd.RokProdukcji,
-                        pojazd.Typ,
-                        pojazd.Typ == "Osobowy" ? pojazd.Osobowy?.LiczbaDrzwi.ToString() :
-                        pojazd.Typ == "Motor" ? pojazd.Motor?.PojemnoscSilnika.ToString() : ""))
+                    var selectedRow = dataGridViewVehicles.SelectedRows[0];
+                    string marka = selectedRow.Cells["Marka"].Value.ToString();
+                    string model = selectedRow.Cells["Model"].Value.ToString();
+                    int rok = int.Parse(selectedRow.Cells["Rok"].Value.ToString());
+
+                    var pojazd = dbContext.Pojazdy
+                        .Include(p => p.Osobowy)
+                        .Include(p => p.Motor)
+                        .FirstOrDefault(p => p.Marka == marka && p.Model == model && p.RokProdukcji == rok);
+
+                    if (pojazd != null)
                     {
-                        if (updateVehicleForm.ShowDialog() == DialogResult.OK)
+                        using (var updateVehicleForm = new UpdateVehicleForm(
+                            pojazd.Marka,
+                            pojazd.Model,
+                            pojazd.RokProdukcji,
+                            pojazd.Typ,
+                            pojazd.Typ == "Osobowy" ? pojazd.Osobowy?.LiczbaDrzwi.ToString() :
+                            pojazd.Typ == "Motor" ? pojazd.Motor?.PojemnoscSilnika.ToString() : ""))
                         {
-                            var typ = updateVehicleForm.Type;
-                            var spec = updateVehicleForm.SpecificValue;
-
-                            pojazd.Marka = updateVehicleForm.Brand;
-                            pojazd.Model = updateVehicleForm.Model;
-                            pojazd.RokProdukcji = updateVehicleForm.Year;
-                            pojazd.Typ = typ;
-
-                            if (typ == "Osobowy")
+                            if (updateVehicleForm.ShowDialog() == DialogResult.OK)
                             {
-                                if (spec >= 1 && spec <= 5)
+                                var typ = updateVehicleForm.Type;
+                                var spec = updateVehicleForm.SpecificValue;
+
+                                pojazd.Marka = updateVehicleForm.Brand;
+                                pojazd.Model = updateVehicleForm.Model;
+                                pojazd.RokProdukcji = updateVehicleForm.Year;
+                                pojazd.Typ = typ;
+
+                                if (typ == "Osobowy")
                                 {
-                                    if (pojazd.Osobowy == null)
-                                        pojazd.Osobowy = new Osobowy();
-                                    pojazd.Osobowy.LiczbaDrzwi = spec;
+                                    if (spec >= 1 && spec <= 5)
+                                    {
+                                        if (pojazd.Osobowy == null)
+                                            pojazd.Osobowy = new Osobowy();
+                                        pojazd.Osobowy.LiczbaDrzwi = spec;
+                                        pojazd.Motor = null;
+                                    }
+                                    else
+                                    {
+                                        MessageBox.Show("Dla pojazdu osobowego liczba drzwi musi być od 1 do 5.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                        return;
+                                    }
+                                }
+                                else if (typ == "Motor")
+                                {
+                                    if (spec > 0)
+                                    {
+                                        if (pojazd.Motor == null)
+                                            pojazd.Motor = new Motor();
+                                        pojazd.Motor.PojemnoscSilnika = spec;
+                                        pojazd.Osobowy = null;
+                                    }
+                                    else
+                                    {
+                                        MessageBox.Show("Dla motocykla pojemność silnika musi być liczbą większą od 0.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                        return;
+                                    }
+                                }
+                                else
+                                {
+                                    pojazd.Osobowy = null;
                                     pojazd.Motor = null;
                                 }
-                                else
-                                {
-                                    MessageBox.Show("Dla pojazdu osobowego liczba drzwi musi być od 1 do 5.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                                    return;
-                                }
+                                dbContext.SaveChanges();
+                                LoadVehiclesFromDatabase();
                             }
-                            else if (typ == "Motor")
-                            {
-                                if (spec > 0)
-                                {
-                                    if (pojazd.Motor == null)
-                                        pojazd.Motor = new Motor();
-                                    pojazd.Motor.PojemnoscSilnika = spec;
-                                    pojazd.Osobowy = null;
-                                }
-                                else
-                                {
-                                    MessageBox.Show("Dla motocykla pojemność silnika musi być liczbą większą od 0.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                                    return;
-                                }
-                            }
-                            else
-                            {
-                                pojazd.Osobowy = null;
-                                pojazd.Motor = null;
-                            }
-                            dbContext.SaveChanges();
-                            LoadVehiclesFromDatabase();
                         }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Nie można znaleźć pojazdu w bazie!", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
                 else
                 {
-                    MessageBox.Show("Nie można znaleźć pojazdu w bazie!", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Wybierz rekord do aktualizacji.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Wybierz rekord do aktualizacji.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ShowConnectionError(ex);
             }
         }
 
@@ -316,201 +343,261 @@ namespace Projekt
 
         private void ButtonRefresh_Click(object sender, EventArgs e)
         {
-            textBoxSearch.Text = "";
-            LoadVehiclesFromDatabase();
-            MessageBox.Show("Odświeżono dane", "Informacja", MessageBoxButtons.OK);
+            try
+            {
+                textBoxSearch.Text = "";
+                LoadVehiclesFromDatabase();
+                MessageBox.Show("Odświeżono dane", "Informacja", MessageBoxButtons.OK);
+            }
+            catch (Exception ex)
+            {
+                ShowConnectionError(ex);
+            }
         }
 
         private void ButtonDeleteVehicle_Click(object sender, EventArgs e)
         {
-            if (dataGridViewVehicles.SelectedRows.Count > 0)
+            try
             {
-                var selectedRow = dataGridViewVehicles.SelectedRows[0];
-                string marka = selectedRow.Cells["Marka"].Value.ToString();
-                string model = selectedRow.Cells["Model"].Value.ToString();
-                int rok = int.Parse(selectedRow.Cells["Rok"].Value.ToString());
-
-                var pojazd = dbContext.Pojazdy
-                    .FirstOrDefault(p => p.Marka == marka && p.Model == model && p.RokProdukcji == rok);
-
-                if (pojazd != null)
+                if (dataGridViewVehicles.SelectedRows.Count > 0)
                 {
-                    dbContext.Pojazdy.Remove(pojazd);
-                    dbContext.SaveChanges();
-                    LoadVehiclesFromDatabase();
-                    MessageBox.Show("Pojazd został usunięty!", "Informacja", MessageBoxButtons.OK);
+                    var selectedRow = dataGridViewVehicles.SelectedRows[0];
+                    string marka = selectedRow.Cells["Marka"].Value.ToString();
+                    string model = selectedRow.Cells["Model"].Value.ToString();
+                    int rok = int.Parse(selectedRow.Cells["Rok"].Value.ToString());
+
+                    var pojazd = dbContext.Pojazdy
+                        .FirstOrDefault(p => p.Marka == marka && p.Model == model && p.RokProdukcji == rok);
+
+                    if (pojazd != null)
+                    {
+                        dbContext.Pojazdy.Remove(pojazd);
+                        dbContext.SaveChanges();
+                        LoadVehiclesFromDatabase();
+                        MessageBox.Show("Pojazd został usunięty!", "Informacja", MessageBoxButtons.OK);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Nie udało się znaleźć pojazdu w bazie.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
                 }
                 else
                 {
-                    MessageBox.Show("Nie udało się znaleźć pojazdu w bazie.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Wybierz pojazd do usunięcia.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Wybierz pojazd do usunięcia.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ShowConnectionError(ex);
             }
         }
 
         private void ButtonDetails_Click(object sender, EventArgs e)
         {
-            if (dataGridViewVehicles.SelectedRows.Count > 0)
+            try
             {
-                var row = dataGridViewVehicles.SelectedRows[0];
-                string details = $"Marka: {row.Cells["Marka"].Value}\n" +
-                                 $"Model: {row.Cells["Model"].Value}\n" +
-                                 $"Rok Produkcji: {row.Cells["Rok"].Value}\n" +
-                                 $"Typ: {row.Cells["Typ"].Value}\n" +
-                                 $"Specyficzne: {row.Cells["Specyficzne"].Value}";
-                MessageBox.Show(details, "Szczegóły pojazdu", MessageBoxButtons.OK);
+                if (dataGridViewVehicles.SelectedRows.Count > 0)
+                {
+                    var row = dataGridViewVehicles.SelectedRows[0];
+                    string details = $"Marka: {row.Cells["Marka"].Value}\n" +
+                                     $"Model: {row.Cells["Model"].Value}\n" +
+                                     $"Rok Produkcji: {row.Cells["Rok"].Value}\n" +
+                                     $"Typ: {row.Cells["Typ"].Value}\n" +
+                                     $"Specyficzne: {row.Cells["Specyficzne"].Value}";
+                    MessageBox.Show(details, "Szczegóły pojazdu", MessageBoxButtons.OK);
+                }
+                else
+                {
+                    MessageBox.Show("Wybierz pojazd, aby wyświetlić szczegóły.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Wybierz pojazd, aby wyświetlić szczegóły.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ShowConnectionError(ex);
             }
         }
 
         private void ButtonExportXML_Click(object sender, EventArgs e)
         {
-            using (var saveFileDialog = new SaveFileDialog { Filter = "XML Files (*.xml)|*.xml|All Files (*.*)|*.*" })
+            try
             {
-                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                using (var saveFileDialog = new SaveFileDialog { Filter = "XML Files (*.xml)|*.xml|All Files (*.*)|*.*" })
                 {
-                    var pojazdy = dbContext.Pojazdy
-                        .Include(p => p.Osobowy)
-                        .Include(p => p.Motor)
-                        .ToList();
-
-                    XmlSerializer serializer = new XmlSerializer(typeof(List<Pojazd>));
-                    using (FileStream fs = new FileStream(saveFileDialog.FileName, FileMode.Create))
+                    if (saveFileDialog.ShowDialog() == DialogResult.OK)
                     {
-                        serializer.Serialize(fs, pojazdy);
+                        var pojazdy = dbContext.Pojazdy
+                            .Include(p => p.Osobowy)
+                            .Include(p => p.Motor)
+                            .ToList();
+
+                        XmlSerializer serializer = new XmlSerializer(typeof(List<Pojazd>));
+                        using (FileStream fs = new FileStream(saveFileDialog.FileName, FileMode.Create))
+                        {
+                            serializer.Serialize(fs, pojazdy);
+                        }
+                        MessageBox.Show("Eksport do XML zakończony!", "Sukces", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
-                    MessageBox.Show("Eksport do XML zakończony!", "Sukces", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
+            }
+            catch (Exception ex)
+            {
+                ShowConnectionError(ex);
             }
         }
 
         private void ButtonImportXML_Click(object sender, EventArgs e)
         {
-            using (var openFileDialog = new OpenFileDialog { Filter = "XML Files (*.xml)|*.xml|All Files (*.*)|*.*" })
+            try
             {
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                using (var openFileDialog = new OpenFileDialog { Filter = "XML Files (*.xml)|*.xml|All Files (*.*)|*.*" })
                 {
-                    List<Pojazd> pojazdy;
-                    XmlSerializer serializer = new XmlSerializer(typeof(List<Pojazd>));
-                    using (FileStream fs = new FileStream(openFileDialog.FileName, FileMode.Open))
+                    if (openFileDialog.ShowDialog() == DialogResult.OK)
                     {
-                        pojazdy = (List<Pojazd>)serializer.Deserialize(fs);
-                    }
+                        List<Pojazd> pojazdy;
+                        XmlSerializer serializer = new XmlSerializer(typeof(List<Pojazd>));
+                        using (FileStream fs = new FileStream(openFileDialog.FileName, FileMode.Open))
+                        {
+                            pojazdy = (List<Pojazd>)serializer.Deserialize(fs);
+                        }
 
-                    foreach (var p in pojazdy)
-                    {
-                        bool exists = dbContext.Pojazdy.Any(x => x.Marka == p.Marka && x.Model == p.Model && x.RokProdukcji == p.RokProdukcji);
-                        if (!exists)
-                            dbContext.Pojazdy.Add(p);
+                        foreach (var p in pojazdy)
+                        {
+                            bool exists = dbContext.Pojazdy.Any(x => x.Marka == p.Marka && x.Model == p.Model && x.RokProdukcji == p.RokProdukcji);
+                            if (!exists)
+                                dbContext.Pojazdy.Add(p);
+                        }
+                        dbContext.SaveChanges();
+                        LoadVehiclesFromDatabase();
+                        MessageBox.Show("Import z XML zakończony!", "Sukces", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
-                    dbContext.SaveChanges();
-                    LoadVehiclesFromDatabase();
-                    MessageBox.Show("Import z XML zakończony!", "Sukces", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
+            }
+            catch (Exception ex)
+            {
+                ShowConnectionError(ex);
             }
         }
 
         private void ButtonExportXLS_Click(object sender, EventArgs e)
         {
-            using (var saveFileDialog = new SaveFileDialog { Filter = "Excel Files (*.xlsx)|*.xlsx|All Files (*.*)|*.*" })
+            try
             {
-                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                using (var saveFileDialog = new SaveFileDialog { Filter = "Excel Files (*.xlsx)|*.xlsx|All Files (*.*)|*.*" })
                 {
-                    var pojazdy = dbContext.Pojazdy
-                        .Include(p => p.Osobowy)
-                        .Include(p => p.Motor)
-                        .ToList();
-
-                    using (var workbook = new XLWorkbook())
+                    if (saveFileDialog.ShowDialog() == DialogResult.OK)
                     {
-                        var worksheet = workbook.Worksheets.Add("Pojazdy");
-                        worksheet.Cell(1, 1).Value = "Marka";
-                        worksheet.Cell(1, 2).Value = "Model";
-                        worksheet.Cell(1, 3).Value = "Rok";
-                        worksheet.Cell(1, 4).Value = "Typ";
-                        worksheet.Cell(1, 5).Value = "Specyficzne";
+                        var pojazdy = dbContext.Pojazdy
+                            .Include(p => p.Osobowy)
+                            .Include(p => p.Motor)
+                            .ToList();
 
-                        int row = 2;
-                        foreach (var p in pojazdy)
+                        using (var workbook = new XLWorkbook())
                         {
-                            worksheet.Cell(row, 1).Value = p.Marka;
-                            worksheet.Cell(row, 2).Value = p.Model;
-                            worksheet.Cell(row, 3).Value = p.RokProdukcji;
-                            worksheet.Cell(row, 4).Value = p.Typ;
-                            worksheet.Cell(row, 5).Value = p.Typ == "Osobowy"
-                                ? $"{p.Osobowy?.LiczbaDrzwi ?? 0} drzwi"
-                                : p.Typ == "Motor"
-                                    ? $"{p.Motor?.PojemnoscSilnika ?? 0}cc"
-                                    : "";
-                            row++;
-                        }
+                            var worksheet = workbook.Worksheets.Add("Pojazdy");
+                            worksheet.Cell(1, 1).Value = "Marka";
+                            worksheet.Cell(1, 2).Value = "Model";
+                            worksheet.Cell(1, 3).Value = "Rok";
+                            worksheet.Cell(1, 4).Value = "Typ";
+                            worksheet.Cell(1, 5).Value = "Specyficzne";
 
-                        workbook.SaveAs(saveFileDialog.FileName);
+                            int row = 2;
+                            foreach (var p in pojazdy)
+                            {
+                                worksheet.Cell(row, 1).Value = p.Marka;
+                                worksheet.Cell(row, 2).Value = p.Model;
+                                worksheet.Cell(row, 3).Value = p.RokProdukcji;
+                                worksheet.Cell(row, 4).Value = p.Typ;
+                                worksheet.Cell(row, 5).Value = p.Typ == "Osobowy"
+                                    ? $"{p.Osobowy?.LiczbaDrzwi ?? 0} drzwi"
+                                    : p.Typ == "Motor"
+                                        ? $"{p.Motor?.PojemnoscSilnika ?? 0}cc"
+                                        : "";
+                                row++;
+                            }
+
+                            workbook.SaveAs(saveFileDialog.FileName);
+                        }
+                        MessageBox.Show("Eksport do Excela zakończony!", "Sukces", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
-                    MessageBox.Show("Eksport do Excela zakończony!", "Sukces", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
+            }
+            catch (Exception ex)
+            {
+                ShowConnectionError(ex);
             }
         }
 
         private void ButtonImportXLS_Click(object sender, EventArgs e)
         {
-            using (var openFileDialog = new OpenFileDialog { Filter = "Excel Files (*.xlsx)|*.xlsx|All Files (*.*)|*.*" })
+            try
             {
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                using (var openFileDialog = new OpenFileDialog { Filter = "Excel Files (*.xlsx)|*.xlsx|All Files (*.*)|*.*" })
                 {
-                    using (var workbook = new XLWorkbook(openFileDialog.FileName))
+                    if (openFileDialog.ShowDialog() == DialogResult.OK)
                     {
-                        var worksheet = workbook.Worksheet(1);
-                        var rows = worksheet.RangeUsed().RowsUsed().Skip(1); 
-
-                        foreach (var row in rows)
+                        using (var workbook = new XLWorkbook(openFileDialog.FileName))
                         {
-                            string marka = row.Cell(1).GetString();
-                            string model = row.Cell(2).GetString();
-                            int rok = row.Cell(3).GetValue<int>();
-                            string typ = row.Cell(4).GetString();
-                            string specific = row.Cell(5).GetString();
+                            var worksheet = workbook.Worksheet(1);
+                            var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
 
-                            if (!dbContext.Pojazdy.Any(x => x.Marka == marka && x.Model == model && x.RokProdukcji == rok))
+                            foreach (var row in rows)
                             {
-                                var pojazd = new Pojazd
-                                {
-                                    Marka = marka,
-                                    Model = model,
-                                    RokProdukcji = rok,
-                                    Typ = typ
-                                };
+                                string marka = row.Cell(1).GetString();
+                                string model = row.Cell(2).GetString();
+                                int rok = row.Cell(3).GetValue<int>();
+                                string typ = row.Cell(4).GetString();
+                                string specific = row.Cell(5).GetString();
 
-                                if (typ == "Osobowy")
+                                if (!dbContext.Pojazdy.Any(x => x.Marka == marka && x.Model == model && x.RokProdukcji == rok))
                                 {
-                                    int liczbaDrzwi = 0;
-                                    int.TryParse(specific.Replace(" drzwi", ""), out liczbaDrzwi);
-                                    if (liczbaDrzwi >= 1 && liczbaDrzwi <= 5)
-                                        pojazd.Osobowy = new Osobowy { LiczbaDrzwi = liczbaDrzwi };
-                                }
-                                else if (typ == "Motor")
-                                {
-                                    int pojemnosc = 0;
-                                    int.TryParse(specific.Replace("cc", ""), out pojemnosc);
-                                    if (pojemnosc > 0)
-                                        pojazd.Motor = new Motor { PojemnoscSilnika = pojemnosc };
-                                }
+                                    var pojazd = new Pojazd
+                                    {
+                                        Marka = marka,
+                                        Model = model,
+                                        RokProdukcji = rok,
+                                        Typ = typ
+                                    };
 
-                                dbContext.Pojazdy.Add(pojazd);
+                                    if (typ == "Osobowy")
+                                    {
+                                        int liczbaDrzwi = 0;
+                                        int.TryParse(specific.Replace(" drzwi", ""), out liczbaDrzwi);
+                                        if (liczbaDrzwi >= 1 && liczbaDrzwi <= 5)
+                                            pojazd.Osobowy = new Osobowy { LiczbaDrzwi = liczbaDrzwi };
+                                    }
+                                    else if (typ == "Motor")
+                                    {
+                                        int pojemnosc = 0;
+                                        int.TryParse(specific.Replace("cc", ""), out pojemnosc);
+                                        if (pojemnosc > 0)
+                                            pojazd.Motor = new Motor { PojemnoscSilnika = pojemnosc };
+                                    }
+
+                                    dbContext.Pojazdy.Add(pojazd);
+                                }
                             }
+                            dbContext.SaveChanges();
                         }
-                        dbContext.SaveChanges();
+                        LoadVehiclesFromDatabase();
+                        MessageBox.Show("Import z Excela zakończony!", "Sukces", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
-                    LoadVehiclesFromDatabase();
-                    MessageBox.Show("Import z Excela zakończony!", "Sukces", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
+            catch (Exception ex)
+            {
+                ShowConnectionError(ex);
+            }
+        }
+
+        // Wspólna metoda do pokazywania błędów połączenia z bazą
+        private void ShowConnectionError(Exception ex)
+        {
+            MessageBox.Show(
+                "Nie można połączyć się z bazą danych. Sprawdź ustawienia połączenia.\n\nSzczegóły:\n" + ex.Message,
+                "Błąd połączenia z bazą",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error
+            );
         }
     }
 }

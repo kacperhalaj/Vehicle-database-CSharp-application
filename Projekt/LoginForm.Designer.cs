@@ -20,6 +20,7 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(LoginForm));
             tableLayoutPanel1 = new TableLayoutPanel();
             PanelLogowania = new Panel();
+            btnSettings = new Button();
             btnExit = new Button();
             btnLogin = new Button();
             txtPassword = new TextBox();
@@ -65,6 +66,7 @@
             // 
             PanelLogowania.BackColor = SystemColors.ActiveCaption;
             tableLayoutPanel1.SetColumnSpan(PanelLogowania, 3);
+            PanelLogowania.Controls.Add(btnSettings);
             PanelLogowania.Controls.Add(btnExit);
             PanelLogowania.Controls.Add(btnLogin);
             PanelLogowania.Controls.Add(txtPassword);
@@ -79,6 +81,20 @@
             PanelLogowania.Size = new Size(522, 261);
             PanelLogowania.TabIndex = 2;
             PanelLogowania.Paint += PanelLogowania_Paint;
+            // 
+            // btnSettings
+            // 
+            btnSettings.Anchor = AnchorStyles.None;
+            btnSettings.BackColor = Color.LightSlateGray;
+            btnSettings.FlatStyle = FlatStyle.Flat;
+            btnSettings.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 238);
+            btnSettings.Location = new Point(444, 0);
+            btnSettings.Margin = new Padding(0);
+            btnSettings.Name = "btnSettings";
+            btnSettings.Size = new Size(78, 41);
+            btnSettings.TabIndex = 7;
+            btnSettings.Text = "Ustawienia połączenia";
+            btnSettings.UseVisualStyleBackColor = false;
             // 
             // btnExit
             // 
@@ -97,6 +113,7 @@
             btnLogin.Anchor = AnchorStyles.None;
             btnLogin.BackColor = Color.FromArgb(51, 185, 104);
             btnLogin.Cursor = Cursors.Hand;
+            btnLogin.FlatAppearance.BorderSize = 0;
             btnLogin.FlatStyle = FlatStyle.Popup;
             btnLogin.Location = new Point(135, 195);
             btnLogin.Name = "btnLogin";
@@ -222,5 +239,6 @@
         private System.Windows.Forms.Label lblUsername;
         private System.Windows.Forms.Panel panel3;
         private System.Windows.Forms.PictureBox pictureBox1;
+        private Button btnSettings;
     }
 }
