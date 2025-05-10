@@ -54,7 +54,7 @@ dotnet ef database update
 
 ---
 
-## Instrukcja uruchomienia projektu na innym komputerze
+## Instrukcja uruchomienia projektu
 
 Aby uruchomić projekt na swoim komputerze, wykonaj poniższe kroki:
 
