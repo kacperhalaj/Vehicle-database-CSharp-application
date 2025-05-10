@@ -54,15 +54,51 @@ dotnet ef database update
 
 ---
 
-## Uruchamianie aplikacji
+## Instrukcja uruchomienia projektu na innym komputerze
 
-1. Skonfiguruj połączenie do bazy w `appsettings.json` lub przez menu Ustawienia.
-2. Wykonaj migracje:  
-   `dotnet ef database update`
-3. Uruchom aplikację plikiem wykonywalnym lub przez IDE.
-4. Zaloguj się na przykładowe konto:  
-   **login:** `admin`  
-   **hasło:** `admin123`
+Aby uruchomić projekt na swoim komputerze, wykonaj poniższe kroki:
+
+1. **Sklonuj repozytorium:**
+   ```sh
+   git clone https://github.com/kacperhalaj/Vehicle-database-CSharp-application.git
+   cd Vehicle-database-CSharp-application
+   ```
+
+2. **Utwórz pustą bazę danych w PostgreSQL** (np. przez pgAdmin lub konsolę):
+   ```sql
+   CREATE DATABASE baza_pojazdow;
+   ```
+   *(Uwaga: możesz użyć innej nazwy, ale pamiętaj aby ustawić ją w connection string!)*
+
+3. **Skonfiguruj połączenie do bazy danych**  
+   - Edytuj plik `appsettings.json` (w katalogu projektu) i ustaw odpowiedni connection string do swojej bazy.
+   - Lub ustaw go przez menu Ustawienia w aplikacji.
+
+4. **Zainstaluj narzędzia .NET/EF Core (jeśli nie masz):**
+   ```sh
+   dotnet --version
+   dotnet tool install --global dotnet-ef
+   ```
+
+5. **Zbuduj projekt:**
+   ```sh
+   dotnet build
+   ```
+
+6. **Wykonaj migracje i załaduj dane przykładowe:**
+   ```sh
+   dotnet ef database update
+   ```
+
+7. **Uruchom aplikację:**
+   ```sh
+   dotnet run
+   ```
+   lub otwórz w IDE (np. Visual Studio) i uruchom.
+
+8. **Zaloguj się przykładowym kontem:**
+   - login: `admin`
+   - hasło: `admin123`
 
 ---
 
