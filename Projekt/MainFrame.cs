@@ -85,6 +85,12 @@ namespace Projekt
                         (p.Typ == "Osobowy" && p.Osobowy != null && p.Osobowy.LiczbaDrzwi.ToString().Contains(s)) ||
                         (p.Typ == "Motor" && p.Motor != null && p.Motor.PojemnoscSilnika.ToString().Contains(s))
                     ).ToList();
+
+
+                    if (pojazdySource.Count == 0)
+                    {
+                        MessageBox.Show("Nie znaleziono żadnych pojazdów spełniających kryteria wyszukiwania.", "Brak wyników", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
                 }
 
                 SetDataGridSource(pojazdySource);
@@ -589,7 +595,6 @@ namespace Projekt
             }
         }
 
-        // Wspólna metoda do pokazywania błędów połączenia z bazą
         private void ShowConnectionError(Exception ex)
         {
             MessageBox.Show(
