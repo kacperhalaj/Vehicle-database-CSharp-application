@@ -9,7 +9,7 @@ namespace Projekt
         {
             InitializeComponent();
 
-            // Wczytaj aktualny connection string przy otwarciu okna
+            // wczytaj aktualny connection string
             txtConnectionString.Text = ConfigHelper.GetConnectionString();
 
             btnSave.Click += btnSave_Click;
@@ -42,6 +42,11 @@ namespace Projekt
         private void btnCancel_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+        private void SettingsForm_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

@@ -15,20 +15,20 @@ namespace Projekt
             InitializeComponent();
             txtUsername.KeyDown += TextBox_KeyDown;
             txtPassword.KeyDown += TextBox_KeyDown;
-            txtUsername.Leave += TxtUsername_Leave; // <-- asynchroniczna walidacja loginu po opuszczeniu pola
+            txtUsername.Leave += TxtUsername_Leave;
         }
 
-        // Asynchroniczna walidacja loginu po wpisaniu i opuszczeniu pola
+        // asynchroniczna walidacja loginu po wpisaniu i opuszczeniu pola
         private async void TxtUsername_Leave(object sender, EventArgs e)
         {
             string username = txtUsername.Text.Trim();
             if (string.IsNullOrWhiteSpace(username)) return;
 
-            // Przyk³ad: sprawdŸ asynchronicznie czy u¿ytkownik istnieje
+            //sprawdzanie asynchronicznie czy u¿ytkownik istnieje
             bool exists = await UserExistsAsync(username);
             if (!exists)
             {
-                // Opcjonalnie: mo¿esz blokowaæ dalsze logowanie do czasu poprawy loginu
+
                 MessageBox.Show("Podany login nie istnieje w bazie.", "B³¹d", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
@@ -42,7 +42,7 @@ namespace Projekt
             }
         }
 
-        // Obs³uga przycisku "Zaloguj siê"
+        // Obs³uga przycisku zaloguj sie
         private async void button1_Click(object sender, EventArgs e)
         {
             string username = txtUsername.Text.Trim();

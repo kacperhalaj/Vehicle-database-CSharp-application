@@ -42,7 +42,7 @@ namespace Projekt
             dataGridViewVehicles.CellClick += DataGridViewVehicles_CellClick;
             dataGridViewVehicles.ColumnHeaderMouseClick += DataGridViewVehicles_ColumnHeaderMouseClick;
 
-            // PODPIĘCIE PRZYCISKU USTAWIEŃ
+
             btnSettings.Click += BtnSettings_Click;
         }
 
@@ -467,7 +467,7 @@ namespace Projekt
                     using (var workbook = new XLWorkbook(openFileDialog.FileName))
                     {
                         var worksheet = workbook.Worksheet(1);
-                        var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Pomijamy nagłówek
+                        var rows = worksheet.RangeUsed().RowsUsed().Skip(1); 
 
                         foreach (var row in rows)
                         {

@@ -14,26 +14,30 @@ namespace Projekt
 
             // Inicjalizacja timera
             timer = new System.Windows.Forms.Timer();
-            timer.Interval = 100; // Co 100 ms
-            timer.Tick += Timer_Tick; // Obsługa zdarzenia Tick
-            timer.Start(); // Uruchom timer
+            timer.Interval = 100; 
+            timer.Tick += Timer_Tick; 
+            timer.Start(); 
         }
 
         private void Timer_Tick(object sender, EventArgs e)
         {
-            // Zwiększanie wartości ProgressBar
-            progressBar1.Increment(5); // Dodanie 5% do paska przy każdym Tick
+            // ProgressBar
+            progressBar1.Increment(5); 
 
-            // Sprawdzenie, czy ProgressBar osiągnął maksimum
+
             if (progressBar1.Value >= 100)
             {
-                timer.Stop(); // Zatrzymanie timera
-                this.Hide(); // Ukrycie SplashScreen
+                timer.Stop(); 
+                this.Hide(); 
 
-                // Otwórz okno LoginForm
                 LoginForm loginForm = new LoginForm();
                 loginForm.Show();
             }
+        }
+
+        private void SplashScreen_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

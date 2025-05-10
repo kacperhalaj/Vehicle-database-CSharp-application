@@ -153,6 +153,7 @@
             Name = "SplashScreen";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Ładowanie aplikacji";
+            Load += SplashScreen_Load;
             tableLayoutPanel1.ResumeLayout(false);
             panel1.ResumeLayout(false);
             panel1.PerformLayout();

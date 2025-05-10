@@ -20,10 +20,10 @@ namespace Projekt.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            // Jeśli nie skonfigurowano przez DI (np. przy migracjach), wczytaj z appsettings.json
+            
             if (!optionsBuilder.IsConfigured)
             {
-                // Znajdź plik appsettings.json w katalogu projektu lub wyżej
+                
                 var builder = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
                     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
@@ -31,8 +31,6 @@ namespace Projekt.Data
                 var configuration = builder.Build();
                 var connectionString = configuration.GetConnectionString("DefaultConnection");
 
-                // Jeśli appsettings.json nie istnieje, możesz wpisać connection string na sztywno poniżej:
-                // var connectionString = "Host=localhost;Database=baza_pojazdow;Username=postgres;Password=admin";
 
                 optionsBuilder.UseNpgsql(connectionString);
             }

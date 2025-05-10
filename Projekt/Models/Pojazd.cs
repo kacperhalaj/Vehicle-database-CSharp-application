@@ -20,7 +20,7 @@ namespace Projekt.Models
         [MaxLength(20)]
         public string Typ { get; set; }
 
-        // Relacje 1:1 do Osobowe/Motory (opcjonalnie)
+
         public Osobowy Osobowy { get; set; }
         public Motor Motor { get; set; }
     }
