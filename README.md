@@ -28,6 +28,8 @@ Aplikacja wykorzystuje **4 tabele** powiązane relacjami:
 - Dane połączeniowe przechowywane są w pliku `appsettings.json`.
 - Połączenie można zmienić **bezpośrednio z poziomu aplikacji** (menu Ustawienia) bez potrzeby rekompilacji.
 
+![Okno ustawień połączenia z bazą](Projekt/images/connectionstring.png)
+
 ### Przykład sekcji połączenia w `appsettings.json`:
 
 ```json
@@ -71,6 +73,14 @@ dotnet ef database update
 - Eksport/import danych do/z plików XML/XLS
 - Konfigurowalne połączenie z bazą w trakcie działania aplikacji
 
+### Formularz dodawania pojazdu
+
+![Formularz dodawania pojazdu](Projekt/images/addvehicle.png)
+
+### Formularz aktualizowania pojazdu
+
+![Formularz dodawania pojazdu](Projekt/images/updatevehicle.png)
+
 ---
 
 ## Walidacja danych
@@ -78,6 +88,10 @@ dotnet ef database update
 - **Podstawowa**: Sprawdzanie, czy pola są wypełnione, wartości w dozwolonym zakresie (np. liczba drzwi 1–5, pojemność silnika > 0).
 - **Zaawansowana**: Walidacja zależna od kontekstu (np. liczba drzwi tylko dla osobowych, pojemność tylko dla motocykli).
 - Pola formularzy korzystają z odpowiednich kontrolek
+
+### Przykład walidacji formularza
+
+![Przykład walidacji](Projekt/images/loginvalidation.png)
 
 ---
 
@@ -101,8 +115,10 @@ dotnet ef database update
 - **Zmiana connection string w trakcie działania wymaga restartu aplikacji**.
 - **Niepoprawne dane logowania uniemożliwiają dostęp do aplikacji**.
 - **Filtrowanie nie znajduje wyników – użytkownik otrzymuje odpowiedni komunikat**.
+  ![Brak wyników wyszukiwania](Projekt/images/no_results.png)
 - **Brak połączenia z bazą – aplikacja informuje o błędzie i umożliwia zmianę ustawień połączenia**.
-
+  ![Błąd połączenia z bazą](Projekt/images/db_error.png)
+  
 ---
 
 ## Autor
